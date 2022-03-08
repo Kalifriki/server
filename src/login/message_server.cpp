@@ -48,12 +48,29 @@ void message_server_send(uint64 ipp, MSGSERVTYPE type, zmq::message_t* extra, zm
 {
     try
     {
-        std::array<zmq::message_t, 4> msgs;
-        msgs[0] = {ipp};
-        msgs[2] = {type};
-        msgs[3].copy(*extra);
-        msgs[4].copy(*packet);
-        zmq::send_multipart(*zSocket, msgs);
+        zmq::message_t to(sizeof(uint64));
+        memcpy(to.data(), &ipp, sizeof(uint64));
+        zSocket->send(to, zmq::send_flags::sndmore);
+
+        zmq::message_t newType(sizeof(MSGSERVTYPE));
+        ref<uint8>((uint8*)newType.data(), 0) = type;
+        zSocket->send(newType, zmq::send_flags::sndmore);
+
+        zmq::message_t newExtra(extra->size());
+        memcpy(newExtra.data(), extra->data(), extra->size());
+        zSocket->send(newExtra, zmq::send_flags::sndmore);
+
+        zmq::message_t newPacket(packet->size());
+        memcpy(newPacket.data(), packet->data(), packet->size());
+        zSocket->send(newPacket, zmq::send_flags::none);
+
+        // TODO: FIXME
+        // std::array<zmq::message_t, 4> msgs;
+        // msgs[0] = {ipp};
+        // msgs[2] = {type};
+        // msgs[3].copy(*extra);
+        // msgs[4].copy(*packet);
+        // zmq::send_multipart(*zSocket, msgs);
     }
     catch (zmq::error_t& e)
     {

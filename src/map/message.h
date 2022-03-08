@@ -48,10 +48,11 @@ struct chat_message_t
 
     chat_message_t(chat_message_t const& other) noexcept
     {
-        // TODO: ZMQ doesn't like this
-        // this->type.copy(*other.type);
-        // this->packet.copy(*other.packet);
-        // this->data.copy(*other.data);
+        // NOTE: Normally we wouldn't want to use const_cast, but ZMQ has
+        //       deprecated their copy function that uses const&.
+        this->type.copy(*const_cast<zmq::message_t*>(&other.type));
+        this->packet.copy(*const_cast<zmq::message_t*>(&other.packet));
+        this->data.copy(*const_cast<zmq::message_t*>(&other.data));
     }
 
     chat_message_t(chat_message_t&& other) noexcept
