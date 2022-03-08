@@ -13,7 +13,7 @@ on:
 
 jobs:
   Linux_2004_Clang11_64bit:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.04
     steps:
     - uses: actions/checkout@v1
       with:
@@ -21,7 +21,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev
+        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq3-dev zlib1g-dev libssl-dev
     - name: Configure CMake
       run: |
         export CC=/usr/bin/clang-11
@@ -40,7 +40,7 @@ jobs:
           topaz_search
   
   Linux_2004_GCC10_64bit:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.04
     steps:
     - uses: actions/checkout@v1
       with:
@@ -48,7 +48,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev
+        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq3-dev zlib1g-dev libssl-dev
     - name: Configure CMake
       run: |
         export CC=/usr/bin/gcc-10
@@ -99,6 +99,7 @@ jobs:
             topaz_connect_64.exe
             topaz_game_64.exe
             topaz_search_64.exe
+            libmariadb.dll
 
   MacOS_BigSur_11:
     # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
@@ -124,7 +125,7 @@ jobs:
           make -j $(sysctl -n hw.physicalcpu)
 
   Style_Checks:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.04
     steps:
     - uses: actions/checkout@v1
       with:
@@ -218,7 +219,7 @@ jobs:
         fi
 
   Full_Startup_Checks_Linux_2004:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.04
     needs: Linux_2004_Clang11_64bit
     services:
       mysql:
@@ -240,7 +241,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev luarocks python3.7
+        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq3-dev zlib1g-dev libssl-dev luarocks python3.7
     - name: Verify MySQL connection from container
       run: |
         mysql -h 127.0.0.1 -uroot -proot -e "SHOW DATABASES"
@@ -355,7 +356,7 @@ jobs:
         fi
 
   MultiInstance_Startup_Checks_Linux_2004:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.04
     needs: Linux_2004_Clang11_64bit
     services:
       mysql:
@@ -377,7 +378,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev luarocks python3.7
+        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq3-dev zlib1g-dev libssl-dev luarocks python3.7
     - name: Verify MySQL connection from container
       run: |
         mysql -h 127.0.0.1 -uroot -proot -e "SHOW DATABASES"
@@ -487,4 +488,25 @@ jobs:
     - name: Startup checks
       shell: bash
       run: |
-        python3 ./tools/ci/startup_checks.py x64
+        python3 << EOF
+        import io
+        import subprocess
+        import time
+
+        p0 = subprocess.Popen(["topaz_connect_64","--log","connect-server.log"], stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(["topaz_search_64","--log","search-server.log"], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["topaz_game_64","--log","game-server.log"], stdout=subprocess.PIPE)
+
+        time.sleep(120)
+
+        p0.kill()
+        p1.kill()
+        p2.kill()
+
+        for proc in { p0, p1, p2 }:
+            for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
+                if "error" in line or "warning" in line:
+                    print(line)
+                    exit(-1)
+        EOF
+
