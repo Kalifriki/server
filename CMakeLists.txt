@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(topaz CXX)
 
 set_property(GLOBAL PROPERTY CXX_STANDARD 17)
@@ -21,10 +21,8 @@ include(ClangFormat)
 include(Tracy)
 include(Valgrind)
 
-# CMake adds "/W3" by default on MSVC, remove it.
-# Fixed with CMake 3.15
-if(MSVC)
-    string(REGEX REPLACE "/W3[ ]" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+if(WIN32)
+    set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH OFF)
 endif()
 
 message(STATUS "CMAKE_VERSION: ${CMAKE_VERSION}")
