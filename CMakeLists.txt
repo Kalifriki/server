@@ -21,9 +21,7 @@ include(ClangFormat)
 include(Tracy)
 include(Valgrind)
 
-if(WIN32)
-    set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH OFF)
-endif()
+set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH OFF)
 
 message(STATUS "CMAKE_VERSION: ${CMAKE_VERSION}")
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
