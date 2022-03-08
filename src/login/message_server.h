@@ -23,6 +23,7 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include "common/sql.h"
 
 #include <zmq.hpp>
+#include <zmq_addon.hpp>
 
 struct chat_message_t
 {
