@@ -21,7 +21,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq5-dev zlib1g-dev libssl-dev
+        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev
     - name: Configure CMake
       run: |
         export CC=/usr/bin/clang-11
@@ -48,7 +48,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq5-dev zlib1g-dev libssl-dev
+        sudo apt-get install -y software-properties-common cmake libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev
     - name: Configure CMake
       run: |
         export CC=/usr/bin/gcc-10
@@ -240,7 +240,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq5-dev zlib1g-dev libssl-dev luarocks python3.7
+        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev luarocks python3.7
     - name: Verify MySQL connection from container
       run: |
         mysql -h 127.0.0.1 -uroot -proot -e "SHOW DATABASES"
@@ -377,7 +377,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq5-dev zlib1g-dev libssl-dev luarocks python3.7
+        sudo apt-get install -y software-properties-common cmake mariadb-server-10.3 mariadb-client-10.3 libmariadb-dev-compat libluajit-5.1-dev libzmq5 zlib1g-dev libssl-dev luarocks python3.7
     - name: Verify MySQL connection from container
       run: |
         mysql -h 127.0.0.1 -uroot -proot -e "SHOW DATABASES"
