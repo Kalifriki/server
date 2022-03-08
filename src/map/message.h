@@ -19,11 +19,12 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 ===========================================================================
 */
 
-#include "../common/cbasetypes.h"
-#include "../common/mmo.h"
-#include "../common/socket.h"
-#include "../common/sql.h"
-#include "../common/zmq.hpp"
+#include "common/cbasetypes.h"
+#include "common/mmo.h"
+#include "common/socket.h"
+#include "common/sql.h"
+
+#include <zmq.hpp>
 
 class CBasicPacket;
 

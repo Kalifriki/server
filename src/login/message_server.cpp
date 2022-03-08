@@ -22,7 +22,7 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 #include <mutex>
 #include <queue>
 
-#include "../common/logging.h"
+#include "common/logging.h"
 #include "login.h"
 #include "message_server.h"
 
@@ -55,19 +55,19 @@ void message_server_send(uint64 ipp, MSGSERVTYPE type, zmq::message_t* extra, zm
     {
         zmq::message_t to(sizeof(uint64));
         memcpy(to.data(), &ipp, sizeof(uint64));
-        zSocket->send(to, ZMQ_SNDMORE);
+        zSocket->send(to, zmq::send_flags::sndmore);
 
         zmq::message_t newType(sizeof(MSGSERVTYPE));
         ref<uint8>((uint8*)newType.data(), 0) = type;
-        zSocket->send(newType, ZMQ_SNDMORE);
+        zSocket->send(newType, zmq::send_flags::sndmore);
 
         zmq::message_t newExtra(extra->size());
         memcpy(newExtra.data(), extra->data(), extra->size());
-        zSocket->send(newExtra, ZMQ_SNDMORE);
+        zSocket->send(newExtra, zmq::send_flags::sndmore);
 
         zmq::message_t newPacket(packet->size());
         memcpy(newPacket.data(), packet->data(), packet->size());
-        zSocket->send(newPacket);
+        zSocket->send(newPacket, zmq::send_flags::none);
     }
     catch (zmq::error_t& e)
     {
@@ -219,7 +219,7 @@ void message_server_listen()
 
         try
         {
-            if (!zSocket->recv(&from))
+            if (!zSocket->recv(from, zmq::recv_flags::none))
             {
                 if (!msg_queue.empty())
                 {
@@ -235,23 +235,18 @@ void message_server_listen()
                 continue;
             }
 
-            int    more;
-            size_t size = sizeof(more);
-            zSocket->getsockopt(ZMQ_RCVMORE, &more, &size);
-
+            int more = zSocket->get(zmq::sockopt::rcvmore);
             if (more)
             {
-                zSocket->recv(&type);
-                zSocket->getsockopt(ZMQ_RCVMORE, &more, &size);
-
+                std::ignore = zSocket->recv(type, zmq::recv_flags::none);
+                more = zSocket->get(zmq::sockopt::rcvmore);
                 if (more)
                 {
-                    zSocket->recv(&extra);
-                    zSocket->getsockopt(ZMQ_RCVMORE, &more, &size);
-
+                    std::ignore = zSocket->recv(extra, zmq::recv_flags::none);
+                    more = zSocket->get(zmq::sockopt::rcvmore);
                     if (more)
                     {
-                        zSocket->recv(&packet);
+                        std::ignore = zSocket->recv(packet, zmq::recv_flags::none);
                     }
                 }
             }
@@ -287,8 +282,7 @@ void message_server_init()
     zContext = zmq::context_t(1);
     zSocket  = new zmq::socket_t(zContext, ZMQ_ROUTER);
 
-    uint32 to = 500;
-    zSocket->setsockopt(ZMQ_RCVTIMEO, &to, sizeof to);
+    zSocket->set(zmq::sockopt::rcvtimeo, 500);
 
     string_t server = "tcp://";
     server.append(login_config.msg_server_ip);

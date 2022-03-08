@@ -58,9 +58,9 @@ namespace message
             message_queue.pop();
             try
             {
-                zSocket->send(*msg.type, ZMQ_SNDMORE);
-                zSocket->send(*msg.data, ZMQ_SNDMORE);
-                zSocket->send(*msg.packet);
+                zSocket->send(*msg.type, zmq::send_flags::sndmore);
+                zSocket->send(*msg.data, zmq::send_flags::sndmore);
+                zSocket->send(*msg.packet, zmq::send_flags::none);
             }
             catch (std::exception& e)
             {
@@ -548,17 +548,18 @@ namespace message
     {
         while (true)
         {
+            if (!zSocket)
+            {
+                return;
+            }
+
             zmq::message_t type;
             zmq::message_t extra;
             zmq::message_t packet;
 
             try
             {
-                if (!zSocket)
-                {
-                    return;
-                }
-                if (!zSocket->recv(&type))
+                if (!zSocket->recv(type, zmq::recv_flags::none))
                 {
                     if (!message_queue.empty())
                     {
@@ -567,22 +568,22 @@ namespace message
                     continue;
                 }
 
-                int    more;
-                size_t size = sizeof(more);
-                zSocket->getsockopt(ZMQ_RCVMORE, &more, &size);
+                int more = zSocket->get(zmq::sockopt::rcvmore);
                 if (more)
                 {
-                    zSocket->recv(&extra);
-                    zSocket->getsockopt(ZMQ_RCVMORE, &more, &size);
+                    std::ignore = zSocket->recv(extra, zmq::recv_flags::none);
+                    int more = zSocket->get(zmq::sockopt::rcvmore);
                     if (more)
                     {
-                        zSocket->recv(&packet);
+                        std::ignore = zSocket->recv(packet, zmq::recv_flags::none);
                     }
                 }
             }
             catch (zmq::error_t& e)
             {
-                if (!zSocket)
+                // Context was terminated
+                // Exit loop
+                if (!zSocket || e.num() == 156384765)
                 {
                     return;
                 }
@@ -623,10 +624,8 @@ namespace message
         }
         ipp |= (port << 32);
 
-        zSocket->setsockopt(ZMQ_IDENTITY, &ipp, sizeof ipp);
-
-        uint32 to = 500;
-        zSocket->setsockopt(ZMQ_RCVTIMEO, &to, sizeof to);
+        zSocket->set(zmq::sockopt::routing_id, zmq::const_buffer(&ipp, sizeof(ipp)));
+        zSocket->set(zmq::sockopt::rcvtimeo, 500);
 
         string_t server = "tcp://";
         server.append(chatIp);
